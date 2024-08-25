@@ -1,0 +1,170 @@
+<html><head><base href="https://editor.openai.com/hashtag-manager/"><title>Gestor de Hashtags</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f0f0f0;
+        display: flex;
+        justify-content: center;
+        align-height: center;
+        height: 100vh;
+        margin: 0;
+    }
+    .container {
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        width: 300px;
+    }
+    h1 {
+        text-align: center;
+        color: #333;
+    }
+    input[type="text"] {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+    button {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    button:hover {
+        background-color: #45a049;
+    }
+    #hashtagList {
+        list-style-type: none;
+        padding: 0;
+    }
+    #hashtagList li {
+        background-color: #f9f9f9;
+        margin-bottom: 5px;
+        padding: 10px;
+        border-radius: 5px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .deleteBtn {
+        background-color: #f44336;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+    #runBtn, #stopBtn{
+        background-color: #2196F3;
+    }
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gestor de Hashtags</h1>
+        <input type="text" id="hashtagInput" placeholder="Ingrese un hashtag">
+        <button id="addBtn">Add</button>
+        <ul id="hashtagList"></ul>
+        <button id="saveBtn">Save</button>
+        <button id="runBtn">Run</button>
+        <button id="stopBtn">Stop</button>
+    </div>
+
+    <script>
+        const hashtagInput = document.getElementById('hashtagInput');
+        const addBtn = document.getElementById('addBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const runBtn = document.getElementById('runBtn');
+        const hashtagList = document.getElementById('hashtagList');
+        const stopBtn = document.getElementById('stopBtn');
+
+        let hashtags = [];
+
+        function addHashtag() {
+            const hashtag = hashtagInput.value.trim();
+            if (hashtag && !hashtags.includes(hashtag)) {
+                hashtags.push(hashtag);
+                updateList();
+                hashtagInput.value = '';
+            }
+        }
+
+        function deleteHashtag(index) {
+            hashtags.splice(index, 1);
+            updateList();
+        }
+
+        function updateList() {
+            hashtagList.innerHTML = '';
+            hashtags.forEach((hashtag, index) => {
+                const li = document.createElement('li');
+                li.textContent = hashtag;
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Borrar';
+                deleteBtn.className = 'deleteBtn';
+                deleteBtn.onclick = () => deleteHashtag(index);
+                li.appendChild(deleteBtn);
+                hashtagList.appendChild(li);
+            });
+        }
+
+        function saveHashtags() {
+            localStorage.setItem('hashtags', JSON.stringify(hashtags));
+            
+            fetch('http://127.0.0.1:5000/guardar_lista', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ lista: hashtags })
+                })
+                .then(response => response.text())
+                .then(data => alert(data));
+        
+            alert('Hashtags guardados!');
+        }
+
+        function loadHashtags() {
+            const savedHashtags = localStorage.getItem('hashtags');
+            if (savedHashtags) {
+                hashtags = JSON.parse(savedHashtags);
+                updateList();
+            }
+        }
+
+        addBtn.addEventListener('click', addHashtag);
+        saveBtn.addEventListener('click', saveHashtags);
+        runBtn.addEventListener('click', () => {
+            fetch('http://127.0.0.1:5000/run')
+            .then(respones => alert(response.text))
+            .then(data => alert(data))
+            // Aquí puedes personalizar la acción del botón Run
+            alert('Ejecutando Bot con: ' + hashtags.join(', '));
+        });
+        stopBtn.addEventListener('click', () => {
+            fetch('http://127.0.0.1:5000/stop')
+            .then(respones => alert(response.text))
+            .then(data => alert(data))
+            // Aquí puedes personalizar la acción del botón Run
+            alert('Stop');
+        });
+
+        hashtagInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addHashtag();
+            }
+        });
+
+        // Cargar hashtags guardados al iniciar
+        loadHashtags();
+    </script>
+</body>
+</html>

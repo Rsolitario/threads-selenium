@@ -5,6 +5,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from selenium.webdriver.chrome.options import Options
 from time import sleep
 import sys, random
 from datetime import datetime
@@ -15,16 +16,26 @@ load_dotenv()
 
 from type_threads import *
 from target_market import *
+from settings import *
+from master import *
+buffer = []
 
-class Bot:
+class Bot(Sequence):
 
     def __init__(self, username:str, password:str):
         self.username = username
         self.password = password
-        self.driver = webdriver.Chrome()
+        options = Options()
+        options.add_argument("headless")
+        if Settings.debug:
+            self.driver = webdriver.Chrome()
+        else:
+            self.driver = webdriver.Chrome(options=options)
         self.driver.maximize_window()
         self.url = "https://www.threads.net"
         self.url_search = "https://www.threads.net/search?q=%23{}&serp_type=default"
+        self.hashtag = Hashtag()
+        self.sequence = 0
 
     def esperar_ser_clickeable(self, driver, time, selector, xpath_target):
         try:
@@ -34,10 +45,15 @@ class Bot:
             print(f"esperar_ser_clickeable - {xpath_target}")
         return -1
     
+    def scrollTagName(self, num: int):
+        for _ in range(num):
+            self.driver.find_element(By.TAG_NAME, "body").send_keys(Keys.END)
+            sleep(Settings.max_sleep_run)
+    
     def log(self, text:str):
         if not os.path.exists('logs'):
             os.mkdir('logs')
-        with open(f'@logs {datetime.now()}', 'w') as f:
+        with open(f'logs/@logs-{datetime.now()}.txt'.replace(' ', '-').replace(':','-'), 'w') as f:
             f.write(text)
         return self
 
@@ -54,7 +70,7 @@ class Bot:
     
     def buscar(self):
         self.esperar_ser_clickeable(self.driver, 10, By.XPATH, Threads.buscar.b_buscar)     # estoy dentro
-        self.driver.get(self.url_search.format(Target.hashtag.next()))
+        self.driver.get(self.url_search.format(self.hashtag.next(self.sequence)))
 
         #self.driver.find_element(By.XPATH, Threads.buscar.b_buscar).click()
         #self.esperar_ser_clickeable(self.driver, 10, By.XPATH, Threads.buscar.i_buscar)
@@ -65,37 +81,47 @@ class Bot:
         #self.driver.find_element(By.XPATH, Threads.buscar.i_buscar).click() # error!
         return self
     
+    def esperar(self):
+        print(buffer)
+        self.log(str(buffer)) # exception!!!
+        buffer.clear()
+        print('[+] Sleeping')
+        sleep(Settings.sleep_time)
+    
     def listar_iterar(self):
-        self.esperar_ser_clickeable(self.driver, 10, By.XPATH, Threads.fila_publicaciones.l_post)
-        rows_threads = self.driver.find_elements(By.XPATH, Threads.fila_publicaciones.l_post)
-        size = len(rows_threads)
-        sleep(5)
-        print("[+] siguiente hilo por clickear()")
-        thread = rows_threads[random.randint(1, size)]
-        thread.click()
-                    #thread.find_element(By.XPATH, Threads.fila_publicaciones.b_post_start).click()
-        print(thread.id)
-        sleep(5)
-        self.esperar_ser_clickeable(self.driver, 10, By.XPATH, Threads.publicacion.b_ver_actividad)
-        self.driver.find_element(By.XPATH, Threads.publicacion.b_ver_actividad).click()                 # ver actividad
+        try:
+            print('len buffer: ', len(buffer), "sequence: ", self.sequence)
+            if len(buffer) >= Settings.maximum_number_of_likes:
+                self.esperar()
+            
+            # Scroll
+            self.scrollTagName(Settings.scroll)
+            self.esperar_ser_clickeable(self.driver, 10, By.XPATH, Threads.fila_publicaciones.l_post3)
+            rows_threads = self.driver.find_elements(By.XPATH, Threads.fila_publicaciones.l_post3)
+            size = len(rows_threads)
+            print("[+] siguiente hilo por clickear()")
+            
+            # cambiar por una secuencia predecible
+            thread = rows_threads[self.int_sequence()]       
+            thread.click()
+                        #thread.find_element(By.XPATH, Threads.fila_publicaciones.b_post_start).click()
+            print(thread.id)
+            self.esperar_ser_clickeable(self.driver, 10, By.XPATH, Threads.publicacion.b_ver_actividad)
+            self.driver.find_element(By.XPATH, Threads.publicacion.b_ver_actividad).click()                 # ver actividad
 
-        self.esperar_ser_clickeable(self.driver, 10, By.XPATH, Threads.publicacion.l_likes)
-        like_data = self.driver.find_elements(By.XPATH, Threads.publicacion.l_likes)
-                    #for i in like_data:
-                    #    print(i.text)
-        sleep(5)
-        self.esperar_ser_clickeable(self.driver, 10, By.XPATH, Threads.publicacion._l_likes_data)
-        likes = self.driver.find_elements(By.XPATH, Threads.publicacion._l_likes_data)
-        count:int = 0
-        buffer = []
-        for like in likes:
-            try:
-                count += 1
-                if (count % Threads.publicacion.max_likes_2h) == 0:
-                    self.log(str(buffer))
-                    buffer.clear()
-                    print('[+] Sleeping')
-                    sleep(60 * 60 * 2)
+            self.esperar_ser_clickeable(self.driver, 10, By.XPATH, Threads.publicacion.l_likes)
+            like_data = self.driver.find_elements(By.XPATH, Threads.publicacion.l_likes)
+                        #for i in like_data:
+                        #    print(i.text)
+            
+            self.esperar_ser_clickeable(self.driver, 10, By.XPATH, Threads.publicacion._l_likes_data)
+            likes = self.driver.find_elements(By.XPATH, Threads.publicacion._l_likes_data)
+            count:int = 0            
+            for like in likes:
+                try:
+                    count += 1
+                    if (count % Threads.publicacion.max_likes_2h) == 0:
+                        self.esperar()
 
                     like.find_element(By.XPATH, Threads.publicacion._l_likes).click()
                     buffer.append(like.text)
@@ -106,15 +132,22 @@ class Bot:
                         self.driver.find_element(By.XPATH, Threads.publicacion.b_time_reset)
                         self.driver.back()
                         break
-                            
+                                
                     if count <= Threads.publicacion.number_selector:
                         continue
-            except:
-                self.driver.find_element(By.XPATH, Threads.publicacion.b_time_reset)
-                break
-        
-        self.driver.get(self.url_search.format(Target.hashtag.next()))
-        self.listar_iterar()
+
+                    sleep(random.randint(1, Settings.max_sleep_run))
+                except:
+                    self.driver.find_element(By.XPATH, Threads.publicacion.b_time_reset)
+                    break
+
+            sleep(random.randint(2, Settings.max_sleep_run))
+            self.driver.get(self.url_search.format(self.hashtag.next(self.sequence)))
+            self.listar_iterar()
+        except:
+            sleep(random.randint(2, Settings.max_sleep_run))
+            self.driver.get(self.url_search.format(self.hashtag.next(self.sequence)))
+            self.listar_iterar()
 
 bot = Bot(os.environ.get('USERNAME_THREADS'), os.environ.get('PASSWORD_THREADS'))
 bot.login().buscar().listar_iterar()
