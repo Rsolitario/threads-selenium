@@ -4,6 +4,7 @@ import subprocess
 app = Flask(__name__)
 
 process = None
+process_unfollow = None
 
 @app.route('/')
 def index():
@@ -12,8 +13,8 @@ def index():
 @app.route('/guardar_lista', methods=['POST'])
 def guardar_lista():
     lista = request.json['lista']
-    print(lista)
-    with open('hashtagfile', 'w') as file:
+    
+    with open('hashtagfile', 'w', encoding='utf-8') as file:
         for item in lista:
             file.write(f"{item}\n")
     return 'Lista guardada en hashtagfile'
@@ -34,6 +35,22 @@ def stop():
         return 'Proceso de Python terminado exitosamente.'
     except subprocess.CalledProcessError as e:
         return 'Error al intentar terminar el proceso de Python: ' + str(e)
+
+@app.route('/unfollow')
+def unfollow():
+    global process_unfollow
+    process_unfollow = subprocess.Popen(['python', 'unfollow.py'])
+    return "sucess"
+
+@app.route('/stopunfollow')
+def stop_unfollow():
+    try:
+        process_id = process_unfollow.pid
+        output = subprocess.run(['taskkill', '/F', '/T', '/PID', str(process_id)])
+        return 'Proceso de Python terminado exitosamente.'
+    except subprocess.CalledProcessError as e:
+        return 'Error al intentar terminar el proceso de Python: ' + str(e)
+
 
 if __name__ == '__main__':
     app.run(debug=True)

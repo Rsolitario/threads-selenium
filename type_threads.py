@@ -45,12 +45,15 @@ class Post:
         return "publicacion individual"
     
 class BarNav:
-    perfil = '/html/body/div[2]/div/div/div[2]/div[1]/div[2]/div[4]/a/div/div[2]'
+    perfil = '/html/body/div[2]/div/div/div[2]/div[1]/div[2]/div[4]/a'
 
 class unfollow:
     perfil_follow = '/html/body/div[2]/div/div/div[2]/div[2]/div/div/div/div[2]/div[1]/div/div/div[2]/div[1]/div[1]/div[3]/div[1]/div/div/span'
-    b_follow = '/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[2]/div/div/div/div[2]/div/div/div/div/div[1]/div/div[2]/div/span[1]'
-    l_follows = '/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[2]/div/div/div/div[2]/div/div/div/div/div[2]/div[1]/div/div'
+    b_follow = '/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[2]/div/div/div/div[2]/div/div/div/div/div[1]/div/div[2]/div/span'
+    _l_b_follows = "//*[contains(@class, 'xb5mbof x78zum5 x1q0g3np x1493c5g x1ypdohk xfzia1k')]/div[2]/div/div/div/span/div/div/a"
+    _l_b_follows1 = "//*[contains(@class, 'xb5mbof x78zum5 x1q0g3np x1493c5g x1ypdohk xfzia1k')]/div[2]/div/div[2]"
+    perfil_unfollow = "/html/body/div[2]/div/div/div[2]/div[2]/div/div/div/div[1]/div[1]/div/div/div[2]/div[1]/div[2]/div/div"
+
 
 class Threads:
     sesion = Session()

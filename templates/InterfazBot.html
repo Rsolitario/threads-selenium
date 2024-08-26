@@ -65,17 +65,22 @@
     #runBtn, #stopBtn{
         background-color: #2196F3;
     }
+    #unfollow, #stopUnfollow {
+        background-color: red;
+    }
 </style>
 </head>
 <body>
     <div class="container">
-        <h1>Gestor de Hashtags</h1>
-        <input type="text" id="hashtagInput" placeholder="Ingrese un hashtag">
+        <h1>hashtag manager</h1>
+        <input type="text" id="hashtagInput" placeholder="Enter a hashtag">
         <button id="addBtn">Add</button>
         <ul id="hashtagList"></ul>
         <button id="saveBtn">Save</button>
         <button id="runBtn">Run</button>
         <button id="stopBtn">Stop</button>
+        <button id = "unfollow">Unfollow</button>
+        <button id="stopUnfollow">Stop Unfollow</button>
     </div>
 
     <script>
@@ -85,6 +90,8 @@
         const runBtn = document.getElementById('runBtn');
         const hashtagList = document.getElementById('hashtagList');
         const stopBtn = document.getElementById('stopBtn');
+        const unfollow = document.getElementById('unfollow');
+        const stopUnfollow = document.getElementById('stopUnfollow');
 
         let hashtags = [];
 
@@ -108,7 +115,7 @@
                 const li = document.createElement('li');
                 li.textContent = hashtag;
                 const deleteBtn = document.createElement('button');
-                deleteBtn.textContent = 'Borrar';
+                deleteBtn.textContent = 'Delete';
                 deleteBtn.className = 'deleteBtn';
                 deleteBtn.onclick = () => deleteHashtag(index);
                 li.appendChild(deleteBtn);
@@ -156,6 +163,21 @@
             // Aquí puedes personalizar la acción del botón Run
             alert('Stop');
         });
+        unfollow.addEventListener('click', () => {
+            fetch('http://127.0.0.1:5000/unfollow')
+            .then(respones => alert(response.text))
+            .then(data => alert(data))
+            // Aquí puedes personalizar la acción del botón Run
+            alert('Run unfollow');
+        });
+        stopUnfollow.addEventListener('click', () => {
+            fetch('http://127.0.0.1:5000/stopunfollow')
+            .then(respones => alert(response.text))
+            .then(data => alert(data))
+            // Aquí puedes personalizar la acción del botón Run
+            alert('Stop unfollow');
+        });
+
 
         hashtagInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
